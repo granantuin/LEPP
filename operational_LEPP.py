@@ -114,7 +114,7 @@ def get_meteogalicia_model_12Km(coorde):
     try:
           
       today = pd.to_datetime("today")    
-      head2 = today.strftime("/%Y%m%d/wrf_arw_det1km_history_d02")
+      head2 = today.strftime("/%Y%m%d/wrf_arw_det_history_d02")
       head3 = today.strftime("_%Y%m%d_0000.nc4?")
       head = head1+head2+head3
        
@@ -139,7 +139,7 @@ def get_meteogalicia_model_12Km(coorde):
     except:
 
       today = pd.to_datetime("today")-timedelta(1)
-      head2 = today.strftime("/%Y%m%d/wrf_arw_det1km_history_d02")
+      head2 = today.strftime("/%Y%m%d/wrf_arw_det_history_d02")
       head3 = today.strftime("_%Y%m%d_0000.nc4?")
       head = head1+head2+head3
         
