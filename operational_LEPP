@@ -17,7 +17,7 @@ from sklearn.metrics import mean_absolute_error
 
 warnings.filterwarnings("ignore")
 
-st.set_page_config(page_title="Vigo airport Machine Learning forecast",layout="wide")
+st.set_page_config(page_title="Pamplona airport Machine Learning forecast",layout="wide")
 
 def Hss(cm):
      """
@@ -109,10 +109,12 @@ def get_meteogalicia_model_12Km(coorde):
     var = var1+var2+var3 
     head1="http://mandeo.meteogalicia.es/thredds/ncss/modelos/WRF_HIST/d02"
     
+    
+    
     try:
           
       today = pd.to_datetime("today")    
-      head2 = today.strftime("/%Y%m%d/wrf_arw_det1km_history_d05")
+      head2 = today.strftime("/%Y%m%d/wrf_arw_det1km_history_d02")
       head3 = today.strftime("_%Y%m%d_0000.nc4?")
       head = head1+head2+head3
        
@@ -137,7 +139,7 @@ def get_meteogalicia_model_12Km(coorde):
     except:
 
       today = pd.to_datetime("today")-timedelta(1)
-      head2 = today.strftime("/%Y%m%d/wrf_arw_det1km_history_d05")
+      head2 = today.strftime("/%Y%m%d/wrf_arw_det1km_history_d02")
       head3 = today.strftime("_%Y%m%d_0000.nc4?")
       head = head1+head2+head3
         
@@ -193,16 +195,16 @@ AgGrid(metars[["metar_o","dir_o","spd_o","gust_o","visibility_o","wxcodes_o","sk
 
 #@title BR or FG
 #open algorithm prec d0 d1
-alg = pickle.load(open("algorithms/brfg_LEVX_1km_time_d0.al","rb"))
-alg1 = pickle.load(open("algorithms/brfg_LEVX_1km_time_d1.al","rb"))
+alg = pickle.load(open("algorithms/brfg_LEPP_d0.al","rb"))
+#alg1 = pickle.load(open("algorithms/brfg_LEPP_d1.al","rb"))
 
 #select model variables
 model_x_var = meteo_model[:24][alg["x_var"]]
-model_x_var1 = meteo_model[24:48][alg1["x_var"]]
+#model_x_var1 = meteo_model[24:48][alg1["x_var"]]
 
 # forecat br/fg from ml
 brfg_ml = alg["pipe"].predict(model_x_var)
-brfg_ml1 = alg1["pipe"].predict(model_x_var1)
+#brfg_ml1 = alg1["pipe"].predict(model_x_var1)
 
 #label metars br/fg data
 metars["brfg_o_l"] = "No BR/FG"
@@ -212,8 +214,8 @@ mask = metars['wxcodes_o'].str.contains("FG")
 metars.loc[mask,["brfg_o_l"]] = "BR/FG"
 
 #set up dataframe forecast machine learning 
-df_for = pd.DataFrame({"time": meteo_model[:48].index,
-                       "brfg_ml": np.concatenate((brfg_ml,brfg_ml1),axis =0),})
+df_for = pd.DataFrame({"time": meteo_model[:24].index,
+                       "brfg_ml": brfg_ml})
 df_for = df_for.set_index("time")
 
 # concat metars an forecast
