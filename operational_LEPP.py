@@ -114,7 +114,7 @@ def get_meteogalicia_model_12Km(coorde):
     try:
           
       today = pd.to_datetime("today")    
-      head2 = today.strftime("/%Y%m%d/wrf_arw_det_history_d02")
+      head2 = today.strftime("/%Y/%m/wrf_arw_det_history_d02")
       head3 = today.strftime("_%Y%m%d_0000.nc4?")
       head = head1+head2+head3
        
@@ -139,7 +139,7 @@ def get_meteogalicia_model_12Km(coorde):
     except:
 
       today = pd.to_datetime("today")-timedelta(1)
-      head2 = today.strftime("/%Y%m%d/wrf_arw_det_history_d02")
+      head2 = today.strftime("/%Y/%m/wrf_arw_det_history_d02")
       head3 = today.strftime("_%Y%m%d_0000.nc4?")
       head = head1+head2+head3
         
@@ -252,8 +252,8 @@ plt.grid(True,axis="both")
 st.pyplot(fig)
 
 #show probabilistic results
-prob = (np.concatenate((alg["pipe"].predict_proba(model_x_var),alg1["pipe"].predict_proba(model_x_var1)),axis =0)).transpose()
-df_prob = (pd.DataFrame(prob,index =alg["pipe"].classes_ ).T.set_index(meteo_model[:48].index.map(lambda t: t.strftime('%d-%m %H'))))
+prob = alg["pipe"].predict_proba(model_x_var).transpose()
+df_prob = (pd.DataFrame(prob,index =alg["pipe"].classes_ ).T.set_index(meteo_model[:24].index.map(lambda t: t.strftime('%d-%m %H'))))
 fig, ax = plt.subplots(figsize=(10,8))
 df_prob["BR/FG"] = df_prob["BR/FG"].round(1)
 df_prob["BR/FG"].plot(ax = ax, grid = True, ylim =[0, 1], title = "BR or FG probability", kind='bar')
