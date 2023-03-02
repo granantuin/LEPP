@@ -107,10 +107,10 @@ def get_meteogalicia_model_12Km(coorde):
     var2 = "&var=lwflx&var=conv_prec&var=prec&var=swflx&var=shflx&var=cape&var=cin&var=cfh&var=T850"
     var3 = "&var=cfl&var=cfm&var=cft&var=HGT500&var=HGT850&var=T500&var=snow_prec&var=snowlevel"
     var = var1+var2+var3 
-    head1="http://mandeo.meteogalicia.es/thredds/ncss/modelos/WRF_HIST/d02"
+    head1="https://mandeo.meteogalicia.es/thredds/ncss/modelos/WRF_HIST/d02"
     
     
-    
+    #url12="http://mandeo.meteogalicia.es/thredds/ncss/modelos/WRF_HIST/d02/2016/09/wrf_arw_det_history_d02_20160927_0000.nc4?var=mod&disableLLSubset=on&dis
     try:
           
       today = pd.to_datetime("today")    
