@@ -193,18 +193,111 @@ st.markdown(" ### **Metars**")
 AgGrid(metars[["metar_o","dir_o","spd_o","gust_o","visibility_o","wxcodes_o","skyc1_o","skyl1_o","skyc2_o","skyl2_o","temp_o","tempd_o","mslp_o"]])
 
 
-#@title BR or FG
-#open algorithm prec d0 d1
-alg = pickle.load(open("algorithms/brfg_LEPP_d0.al","rb"))
-#alg1 = pickle.load(open("algorithms/brfg_LEPP_d1.al","rb"))
+#@title Wind direction
+
+#open algorithm spd d0 d1
+alg = pickle.load(open("algorithms/dir_LEPP_d0.al","rb"))
+alg1 = pickle.load(open("algorithms/dir_LEPP_d1.al","rb"))
 
 #select model variables
 model_x_var = meteo_model[:24][alg["x_var"]]
-#model_x_var1 = meteo_model[24:48][alg1["x_var"]]
+model_x_var1 = meteo_model[24:48][alg1["x_var"]]
+
+# forecat spd from ml
+dir_ml = alg["pipe"].predict(model_x_var)
+dir_ml1 = alg1["pipe"].predict(model_x_var1)
+
+#set up dataframe forecast machine learning and WRF
+df_for = pd.DataFrame({"time":meteo_model[:48].index,
+                        "dir_WRF": np.concatenate((model_x_var["dir0"],model_x_var1["dir0"]),axis=0),
+                        "dir_ml": np.concatenate((dir_ml,dir_ml1),axis =0),})
+df_for = df_for.set_index("time")
+
+#label dir_o and dir0 .wind direction to interval dir=-1 variable wind
+interval = pd.IntervalIndex.from_tuples([(-1.5, -0.5),(-0.5,20), (20, 40), (40, 60),
+                                           (60,80),(80,100),(100,120),(120,140),(140,160),
+                                           (160,180),(180,200),(200,220),(220,240),
+                                           (240,260),(260,280),(280,300),(300,320),
+                                           (320,340),(340,360)])
+labels = ['VRB', '[0, 20]', '(20, 40]', '(40, 60]','(60, 80]', '(80, 100]',
+          '(100, 120]', '(120, 140]','(140, 160]', '(160, 180]', '(180, 200]',
+          '(200, 220]','(220, 240]', '(240, 260]', '(260, 280]', '(280, 300]',
+          '(300, 320]', '(320, 340]', '(340, 360]']
+df_for["dir_WRF_l"] = pd.cut(df_for["dir_WRF"], bins=interval,retbins=False,
+                        labels=labels).map({a:b for a,b in zip(interval,labels)}).astype(str)
+
+#dir_o to intervals 
+metars["dir_o_l"] = pd.cut(metars["dir_o"].replace("M",-1).astype(float), bins=interval,retbins=False,
+                        labels=labels).map({a:b for a,b in zip(interval,labels)}).astype(str)                    
+
+# concat metars an forecast
+df_res = pd.concat([df_for,metars[["dir_o","dir_o_l"]]],axis = 1)
+
+#get accuracy
+df_res_dropna = df_res.dropna()
+acc_ml = round(accuracy_score(df_res_dropna.dir_o_l,df_res_dropna.dir_ml),2)
+acc_wrf = round(accuracy_score(df_res_dropna.dir_o_l,df_res_dropna.dir_WRF_l),2)
+if acc_ml>acc_wrf:
+  score_ml+=1
+  best_ml.append("wind direction")   
+if acc_ml<acc_wrf:  
+  score_wrf+=1
+  best_wrf.append("wind direction")   
+
+#Show results
+st.markdown(" #### **Wind direction**")
+fig, ax = plt.subplots(figsize=(10,6))
+plt.plot(df_res_dropna.index, df_res_dropna['dir_ml'], marker="^", markersize=8, 
+         markerfacecolor='w', color="b", linestyle='')
+plt.plot(df_res_dropna.index, df_res_dropna['dir_o_l'], marker="*", markersize=13,
+         markerfacecolor='k', color= "g", linestyle='');
+plt.plot(df_res_dropna.index, df_res_dropna['dir_WRF_l'], marker="v", markersize=8,
+         markerfacecolor='w', color="r", linestyle='');
+plt.legend(('direction ml', 'direction observed', 'direction WRF'),)
+plt.grid(True, axis="both", which="both")
+plt.title("Actual accuracy meteorological model: {:.0%}. Reference: 28%\nActual accuracy machine learning: {:.0%}. Reference: 40%".format(acc_wrf,acc_ml))
+st.pyplot(fig)
+
+fig, ax = plt.subplots(figsize=(10,6))
+plt.plot(df_for.index, df_for['dir_ml'],marker="^", color="b", linestyle='');
+plt.plot(df_for.index, df_for['dir_WRF_l'],marker="v",color="r", linestyle='');
+plt.legend(('direction ml','direction WRF'),)
+plt.title("Forecast meteorological model versus machine learning")
+plt.grid(True)
+st.pyplot(fig)
+
+#probabilistic results
+prob = (np.concatenate((alg["pipe"].predict_proba(model_x_var),alg1["pipe"].predict_proba(model_x_var1)),axis =0)).transpose()
+df_prob = pd.DataFrame(prob,index =alg["pipe"].classes_ ).T
+df_prob = df_prob[labels]
+df_prob.index = meteo_model[:48].index.strftime('%b %d %H:%M Z')
+
+# Find the columns where all values are less than or equal to 5%
+cols_to_drop = df_prob.columns[df_prob.apply(lambda x: x <= 0.05).all()]
+df_prob.drop(cols_to_drop, axis=1, inplace=True)
+
+#Display
+fig1, ax = plt.subplots()
+sns.heatmap(df_prob[:48], annot=True, cmap='coolwarm',
+            linewidths=.2, linecolor='black',fmt='.0%',
+           annot_kws={'size': 5})
+plt.title('Probabilities wind direction more than 5%')
+st.pyplot(fig1)
+
+
+
+#@title BR or FG
+#open algorithm prec d0 d1
+alg = pickle.load(open("algorithms/brfg_LEPP_d0.al","rb"))
+alg1 = pickle.load(open("algorithms/brfg_LEPP_d1.al","rb"))
+
+#select model variables
+model_x_var = meteo_model[:24][alg["x_var"]]
+model_x_var1 = meteo_model[24:48][alg1["x_var"]]
 
 # forecat br/fg from ml
 brfg_ml = alg["pipe"].predict(model_x_var)
-#brfg_ml1 = alg1["pipe"].predict(model_x_var1)
+brfg_ml1 = alg1["pipe"].predict(model_x_var1)
 
 #label metars br/fg data
 metars["brfg_o_l"] = "No BR/FG"
@@ -214,8 +307,8 @@ mask = metars['wxcodes_o'].str.contains("FG")
 metars.loc[mask,["brfg_o_l"]] = "BR/FG"
 
 #set up dataframe forecast machine learning 
-df_for = pd.DataFrame({"time": meteo_model[:24].index,
-                       "brfg_ml": brfg_ml})
+df_for = pd.DataFrame({"time": meteo_model[:48].index,
+                       "brfg_ml": np.concatenate((brfg_ml,brfg_ml1),axis =0),})
 df_for = df_for.set_index("time")
 
 # concat metars an forecast
@@ -252,15 +345,19 @@ plt.grid(True,axis="both")
 st.pyplot(fig)
 
 #show probabilistic results
-prob = alg["pipe"].predict_proba(model_x_var).transpose()
-df_prob = (pd.DataFrame(prob,index =alg["pipe"].classes_ ).T.set_index(meteo_model[:24].index.map(lambda t: t.strftime('%d-%m %H'))))
+prob = (np.concatenate((alg["pipe"].predict_proba(model_x_var),alg1["pipe"].predict_proba(model_x_var1)),axis =0)).transpose()
+df_prob = (pd.DataFrame(prob,index =alg["pipe"].classes_ ).T.set_index(meteo_model[:48].index.map(lambda t: t.strftime('%d-%m %H'))))
 fig, ax = plt.subplots(figsize=(10,8))
 df_prob["BR/FG"] = df_prob["BR/FG"].round(1)
 df_prob["BR/FG"].plot(ax = ax, grid = True, ylim =[0, 1], title = "BR or FG probability", kind='bar')
 st.pyplot(fig)
 
-
-
+#global results
+st.write("#### **Global results**")
+st.write("Better meteorological model outcome: {}".format(score_wrf))
+st.write(best_wrf)
+st.write("Better machine learning outcome: {}".format(score_ml))
+st.write(best_ml)
 
 
 st.write("Project [link](https://github.com/granantuin/LEPP)")
