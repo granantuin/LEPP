@@ -323,7 +323,7 @@ if mae_ml > mae_wrf:
 st.markdown(" ### **Wind intensity knots**")
 fig, ax = plt.subplots(figsize=(8,6))
 df_res.dropna().plot(grid = True, ax=ax, linestyle='--', color = ["r","b","g"]);
-title = "Actual mean absolute error meteorological model (kt): {}. Reference (m/s): 1.35\nActual mean absolute error machine learning (kt): {}. Reference (m/s): 0.89".format(mae_wrf,mae_ml)
+title = "Actual mean absolute error meteorological model (kt): {}. Reference (m/s): 1.9\nActual mean absolute error machine learning (kt): {}. Reference (m/s): 0.74".format(mae_wrf,mae_ml)
 ax.set_title(title)
 ax.grid(True, which = "both", axis = "both")
 st.pyplot(fig)
