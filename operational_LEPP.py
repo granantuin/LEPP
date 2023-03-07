@@ -285,6 +285,56 @@ plt.title('Probabilities wind direction more than 5%')
 st.pyplot(fig1)
 
 
+#@title Wind intensity
+
+#open algorithm spd d0 d1
+alg = pickle.load(open("algorithms/spd_LEPP_d0.al","rb"))
+alg1 = pickle.load(open("algorithms/spd_LEPP_d1.al","rb"))
+
+#select model variables
+model_x_var = meteo_model[:24][alg["x_var"]]
+model_x_var1 = meteo_model[24:48][alg1["x_var"]]
+
+# forecat spd from ml and wrf
+spd_ml = alg["pipe"].predict(meteo_model[:24][alg["x_var"]])
+spd_ml1 = alg1["pipe"].predict(meteo_model[24:48][alg1["x_var"]])
+df_for = pd.DataFrame({"time":meteo_model[:48].index,
+                       "spd_WRF": np.concatenate((np.rint(model_x_var["mod0"]*1.94384),
+                                                   np.rint(model_x_var1["mod0"]*1.94384)),axis=0),
+                       "spd_ml": np.concatenate((np.rint(spd_ml*1.94384),
+                                                  np.rint(spd_ml1*1.94384)),axis =0),})
+df_for = df_for.set_index("time")
+
+# concat metars an forecast
+df_res = pd.concat([df_for,metars["spd_o"]],axis = 1)
+
+#get mae
+df_res_dropna = df_res.dropna()
+mae_ml = round(mean_absolute_error(df_res_dropna.spd_o,df_res_dropna.spd_ml),2)
+mae_wrf = round(mean_absolute_error(df_res_dropna.spd_o,df_res_dropna.spd_WRF),2)
+if mae_ml < mae_wrf:
+  score_ml+=1
+  best_ml.append("wind speed")   
+if mae_ml > mae_wrf:  
+  score_wrf+=1
+  best_wrf.append("wind speed")
+     
+#show results actual versus models
+st.markdown(" ### **Wind intensity knots**")
+fig, ax = plt.subplots(figsize=(8,6))
+df_res.dropna().plot(grid = True, ax=ax, linestyle='--', color = ["r","b","g"]);
+title = "Actual mean absolute error meteorological model (kt): {}. Reference (m/s): 1.35\nActual mean absolute error machine learning (kt): {}. Reference (m/s): 0.89".format(mae_wrf,mae_ml)
+ax.set_title(title)
+ax.grid(True, which = "both", axis = "both")
+st.pyplot(fig)
+
+# show forecasts
+fig, ax = plt.subplots(figsize=(8,6))
+df_for.plot(grid=True, ax=ax, color= ["r","b"],linestyle='--')
+ax.set_title("Forecast meteorological model versus machine learning")
+ax.grid(True, which = "both", axis = "both")
+st.pyplot(fig)
+
 
 #@title BR or FG
 #open algorithm prec d0 d1
