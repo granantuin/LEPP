@@ -402,6 +402,71 @@ df_prob["BR/FG"] = df_prob["BR/FG"].round(1)
 df_prob["BR/FG"].plot(ax = ax, grid = True, ylim =[0, 1], title = "BR or FG probability", kind='bar')
 st.pyplot(fig)
 
+
+#@title SN
+#open algorithm prec d0 d1
+alg = pickle.load(open("algorithms/sn_LEPP_d0.al","rb"))
+alg1 = pickle.load(open("algorithms/sn_LEPP_d1.al","rb"))
+
+#select model variables
+model_x_var = meteo_model[:24][alg["x_var"]]
+model_x_var1 = meteo_model[24:48][alg1["x_var"]]
+
+# forecat br/fg from ml
+sn_ml = alg["pipe"].predict(model_x_var)
+sn_ml1 = alg1["pipe"].predict(model_x_var1)
+
+#label metars br/fg data
+metars["sn_l"] = "No SN"
+mask = metars['wxcodes_o'].str.contains("SN")
+metars.loc[mask,["sn_l"]] = "SN"
+
+#set up dataframe forecast machine learning 
+df_for = pd.DataFrame({"time": meteo_model[:48].index,
+                       "sn_ml": np.concatenate((sn_ml,sn_ml1),axis =0),})
+df_for = df_for.set_index("time")
+
+# concat metars an forecast
+df_res = pd.concat([df_for,metars["sn_l"]], axis = 1)
+df_res_dropna = df_res.dropna()
+
+#Heidke skill score ml
+cm_ml = pd.crosstab(df_res.dropna().brfg_o_l, df_res.dropna().sn_ml, margins=True,)
+acc_ml = round(accuracy_score(df_res_dropna.sn_l,df_res_dropna.sn_ml),2)
+HSS_ml = Hss(cm_ml)
+
+#show results
+st.markdown(" ### **Snow**")
+fig1, ax = plt.subplots(figsize=(4,2))
+sns.heatmap(cm_ml, annot=True, cmap='coolwarm',
+            linewidths=.2, linecolor='black',)
+plt.title("Confusion matrix\nAccuracy machine learning: {:.0%}".format(acc_ml))
+st.pyplot(fig1)
+
+fig, ax = plt.subplots(figsize=(10,4))
+plt.plot(df_res_dropna.index, df_res_dropna['sn_ml'],marker="^", markersize=8, 
+         markerfacecolor='w', color="b",linestyle='');
+plt.plot(df_res_dropna.index, df_res_dropna['sn_l'],marker="*",markersize=8, 
+         markerfacecolor='w', color="g",linestyle='');
+plt.legend(('sn ml', 'sn observed'),)
+plt.grid(True,axis="both")
+plt.title("Actual Heidke skill score machine learning: {}. Reference: 0.73".format(HSS_ml))
+st.pyplot(fig)
+
+fig, ax = plt.subplots(figsize=(10,4))
+plt.plot(df_for.index, df_for['sn_ml'],marker="^",linestyle='');
+plt.title("Forecast machine learning")
+plt.grid(True,axis="both")
+st.pyplot(fig)
+
+#show probabilistic results
+prob = (np.concatenate((alg["pipe"].predict_proba(model_x_var),alg1["pipe"].predict_proba(model_x_var1)),axis =0)).transpose()
+df_prob = (pd.DataFrame(prob,index =alg["pipe"].classes_ ).T.set_index(meteo_model[:48].index.map(lambda t: t.strftime('%d-%m %H'))))
+fig, ax = plt.subplots(figsize=(10,8))
+df_prob["SN"] = df_prob["SN"].round(1)
+df_prob["SN"].plot(ax = ax, grid = True, ylim =[0, 1], title = "Snow probability", kind='bar')
+st.pyplot(fig)
+
 #global results
 st.write("#### **Global results**")
 st.write("Better meteorological model outcome: {}".format(score_wrf))
