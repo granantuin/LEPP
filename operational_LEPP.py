@@ -431,7 +431,7 @@ df_res = pd.concat([df_for,metars["sn_l"]], axis = 1)
 df_res_dropna = df_res.dropna()
 
 #Heidke skill score ml
-cm_ml = pd.crosstab(df_res.dropna().brfg_o_l, df_res.dropna().sn_ml, margins=True,)
+cm_ml = pd.crosstab(df_res.dropna().sn_l, df_res.dropna().sn_ml, margins=True,)
 acc_ml = round(accuracy_score(df_res_dropna.sn_l,df_res_dropna.sn_ml),2)
 HSS_ml = Hss(cm_ml)
 
