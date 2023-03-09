@@ -466,13 +466,13 @@ st.pyplot(fig1)
 
 
 fig, ax = plt.subplots(figsize=(10,6))
-plt.plot(df_res_dropna.index, df_res_dropna['prec_ml'],marker="^", markersize=8, 
+plt.plot(df_res_dropna.index, df_res_dropna['sn_ml'],marker="^", markersize=8, 
          markerfacecolor='w', color="b", linestyle='');
-plt.plot(df_res_dropna.index, df_res_dropna['prec_o_l'],marker="*",markersize=8, 
+plt.plot(df_res_dropna.index, df_res_dropna['snow_prec0_l'],marker="*",markersize=8, 
          markerfacecolor='w', color="g",linestyle='');
-plt.plot(df_res_dropna.index, df_res_dropna['prec_WRF'],marker="v",markersize=8, 
+plt.plot(df_res_dropna.index, df_res_dropna['sn_WRF'],marker="v",markersize=8, 
          markerfacecolor='w', color="r",linestyle='');
-plt.legend(('prec ml', 'prec observed',"precipitation WRF"),)
+plt.legend(('snow ml', 'snow observed',"snow WRF"),)
 plt.grid(True,axis="both")
 plt.title("Actual Heidke skill score meteorological model: {}. Reference: 0.34\nActual Heidke skill score machine learning: {}. Reference: 0.63".format(HSS_wrf,HSS_ml))
 st.pyplot(fig)
