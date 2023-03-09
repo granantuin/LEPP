@@ -468,7 +468,7 @@ st.pyplot(fig1)
 fig, ax = plt.subplots(figsize=(10,6))
 plt.plot(df_res_dropna.index, df_res_dropna['sn_ml'],marker="^", markersize=8, 
          markerfacecolor='w', color="b", linestyle='');
-plt.plot(df_res_dropna.index, df_res_dropna['snow_prec0_l'],marker="*",markersize=8, 
+plt.plot(df_res_dropna.index, df_res_dropna['sn_l'],marker="*",markersize=8, 
          markerfacecolor='w', color="g",linestyle='');
 plt.plot(df_res_dropna.index, df_res_dropna['sn_WRF'],marker="v",markersize=8, 
          markerfacecolor='w', color="r",linestyle='');
@@ -478,8 +478,8 @@ plt.title("Actual Heidke skill score meteorological model: {}. Reference: 0.34\n
 st.pyplot(fig)
 
 fig, ax = plt.subplots(figsize=(10,6))
-plt.plot(df_for.index, df_for['prec_ml'],marker="^", markersize=8, markerfacecolor='w', color="b", linestyle='');
-plt.plot(df_for.index, df_for['prec_WRF'],marker="v",markersize=8, markerfacecolor='w', color="r", linestyle='');
+plt.plot(df_for.index, df_for['sn_ml'],marker="^", markersize=8, markerfacecolor='w', color="b", linestyle='');
+plt.plot(df_for.index, df_for['sn_WRF'],marker="v",markersize=8, markerfacecolor='w', color="r", linestyle='');
 plt.legend(('snow ml', "snow WRF"),)
 plt.title("Forecast machine learning versus WRF")
 plt.grid(True,axis="both")
