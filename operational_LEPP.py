@@ -435,7 +435,7 @@ df_res_dropna = df_res.dropna()
 
 #Heidke skill score ml
 cm_ml = pd.crosstab(df_res.dropna().sn_l, df_res.dropna().sn_ml, margins=True,)
-acc_ml = round(accuracy_score(df_res_dropna.sn_l,df_res_dropna.prec_ml),2)
+acc_ml = round(accuracy_score(df_res_dropna.sn_l,df_res_dropna.sn_ml),2)
 HSS_ml = Hss(cm_ml)
 
 #Heidke skill score meteorological model
